@@ -38,7 +38,10 @@ public class PartidaConfigurator : MonoBehaviour
     void Awake()
     {
         _selectConfig.AlEditarConfig += AbrirEditorDetector;
+
         _iniciarPartida.onClick.AddListener(IniciarPartida);
+        
+        _selectConfig.MostrarOpciones(DetectorTokensConfigurator.ListaDetectores, DetectorTokensConfigurator.ConfigSeleccionada);
     }
 
     void IniciarPartida()
@@ -46,6 +49,7 @@ public class PartidaConfigurator : MonoBehaviour
         if (_selectConfig.OpcionActual != null)
         {
             // hacer cuestion
+            DetectorTokensConfigurator.ConfigSeleccionada = _selectConfig.OpcionActual;
         }
     }
 
@@ -54,5 +58,16 @@ public class PartidaConfigurator : MonoBehaviour
         _detectorConfig.gameObject.SetActive(true);
         _detectorConfig.Configurar(nombre);
         gameObject.SetActive(false);
+
+        _detectorConfig.AlGuardarConfiguracion += AlGuardarConfiguracion;
+    }
+
+    void AlGuardarConfiguracion(string nombre)
+    {
+        _detectorConfig.AlGuardarConfiguracion -= AlGuardarConfiguracion;
+
+        _detectorConfig.gameObject.SetActive(false);
+        gameObject.SetActive(true);
+        _selectConfig.MostrarOpciones(DetectorTokensConfigurator.ListaDetectores, nombre);
     }
 }

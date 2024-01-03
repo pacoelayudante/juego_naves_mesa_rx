@@ -100,18 +100,10 @@ public class TokenTemplates : ScriptableObject
 
             if (_templates.tokenTemplates != null)
             {
-                //var queryTextureSize = _testTexture.texelSize;
                 EditorGUILayout.BeginHorizontal();
                 foreach (var token in _templates.tokenTemplates)
                 {
                     var guirect = GUILayoutUtility.GetRect(token.cvRect.Width, token.cvRect.Height, GUILayout.ExpandWidth(false));
-                    // if (guirect.xMax > EditorGUIUtility.currentViewWidth - 5f)
-                    // {
-                    //     EditorGUILayout.EndHorizontal();
-                    //     EditorGUILayout.BeginHorizontal();
-                    //     guirect = GUILayoutUtility.GetRect(token.cvRect.Width, token.cvRect.Height, GUILayout.ExpandWidth(false));
-                    // }
-                    //EditorGUI.DrawRect(guirect, Color.white);
                     DibujarContorno(guirect, -token.cvRect.TopLeft, token.contorno);
                 }
                 EditorGUILayout.EndHorizontal();

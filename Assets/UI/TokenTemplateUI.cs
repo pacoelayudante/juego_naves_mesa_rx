@@ -18,9 +18,6 @@ public class TokenTemplateUI : MonoBehaviour
     [SerializeField]
     RawImage _rawImage;
 
-    //public Texture2D
-
-    // public void Set(TokenTemplates.TipoTam tipoTam, int orden, int escudosLvl, int armaLvl)
     public void Set(TokenTemplates.TokenTemplate template)
     {
         _tamDropdown.value = (int)template.tipoTam;

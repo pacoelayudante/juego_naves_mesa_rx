@@ -52,8 +52,6 @@ public class TemplatesConfigurator : MonoBehaviour
 
         _botonExtraerContorno.onClick.AddListener(TemplateDetect);
 
-        _colorBlobConfig.AlGuardarConfiguracion += AlGuardarConfiguracionBlob;
-
         _guardarButton.OnSave += Guardar;
 
         if (_tokensTest == null)
@@ -101,7 +99,7 @@ public class TemplatesConfigurator : MonoBehaviour
                 ListaTemplates = lista;
             }
 
-            for (int i = 0; i < _templatesPool.Count; i++)
+            for (int i = 0; i < _templatesPool.Count && i < _tokensTest.tokenTemplates.Length; i++)
             {
                 _templatesPool[i].Apply(_tokensTest.tokenTemplates[i], _escudosLevels);
             }
@@ -133,7 +131,6 @@ public class TemplatesConfigurator : MonoBehaviour
                     Cv2.CvtColor(resultadoBinario, resultadoBinario, ColorConversionCodes.GRAY2BGR);
                     Cv2.DrawContours(resultadoBinario, contornos, -1, Scalar.Red);
                     _resultadoBinarioTex2D = OpenCvSharp.Unity.MatToTexture(resultadoBinario, _resultadoBinarioTex2D);
-                    // _imageExplorer.Texture = _resultadoBinarioTex2D;
 
                     if (_tokensTest == null)
                         _tokensTest = ScriptableObject.Instantiate(_defaultTokens);
@@ -182,7 +179,6 @@ public class TemplatesConfigurator : MonoBehaviour
 
         foreach (var demo in _templatesPool)
         {
-            // demo.texture = null;
             demo.gameObject.SetActive(false);
         }
 
@@ -196,10 +192,6 @@ public class TemplatesConfigurator : MonoBehaviour
 
             _templatesPool[i].gameObject.SetActive(true);
             _templatesPool[i].Set(_tokensTest.tokenTemplates[i]);
-
-            // _templatesPool[i].texture = _resultadoBinarioTex2D;
-            // _templatesPool[i].uvRect = CVManager.ConvertirBBoxAUVRect(Cv2.BoundingRect(contornos[i]), matWidth, matHeight, Vector4.one * _margenesDemo);
-
         }
     }
 
@@ -208,10 +200,14 @@ public class TemplatesConfigurator : MonoBehaviour
         _colorBlobConfig.gameObject.SetActive(true);
         _colorBlobConfig.Configurar(nombre);
         gameObject.SetActive(false);
+
+        _colorBlobConfig.AlGuardarConfiguracion += AlGuardarConfiguracionBlob;
     }
 
     void AlGuardarConfiguracionBlob(string nombre)
     {
+        _colorBlobConfig.AlGuardarConfiguracion -= AlGuardarConfiguracionBlob;
+
         _colorBlobConfig.gameObject.SetActive(false);
         gameObject.SetActive(true);
         _configToDetect.MostrarOpciones(ColorBlobConfigurator.ListaConfigBlobs, nombre);
