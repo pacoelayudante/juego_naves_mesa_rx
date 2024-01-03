@@ -21,7 +21,7 @@ public class TokenTemplates : ScriptableObject
         public TipoTam tipoTam = TipoTam.Mayor;
 
         public int ordenDeDisparo = 0;
-        public bool armaPoderosa;
+        public int nivelArma;
         
         public List<Vector2> escudos = new();//x=porcentaje, y=tam
     }

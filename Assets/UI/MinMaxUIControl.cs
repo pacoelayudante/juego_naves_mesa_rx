@@ -36,6 +36,12 @@ public class MinMaxUIControl : MonoBehaviour
         }
     }
 
+    public void SetMinMaxWithoutNotify(Vector2Int value)
+    {
+        _minValue.SetValueWithoutNotify(value.x);
+        _maxValue.SetValueWithoutNotify(value.y);
+    }
+
     // Start is called before the first frame update
     void Awake()
     {

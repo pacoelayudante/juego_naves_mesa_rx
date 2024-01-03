@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using OpenCvSharp;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 [DisallowMultipleComponent]
 public class ColorBlobConfigurator : MonoBehaviour
@@ -80,10 +83,33 @@ public class ColorBlobConfigurator : MonoBehaviour
         else
         {
             var nombreLargo = $"{CONFIG_BLOBS_LIST}.{config}";
-            JsonUtility.FromJsonOverwrite(PlayerPrefs.GetString(nombreLargo, "{}"), _colorBlobTest);
+            var json = PlayerPrefs.GetString(nombreLargo, "{}");
+            JsonUtility.FromJsonOverwrite(json, _colorBlobTest);
+
+            _hueControl.SetMinMaxWithoutNotify(_colorBlobTest.HueValido);
+            _satControl.SetMinMaxWithoutNotify(_colorBlobTest.SaturacionValida);
+            _valControl.SetMinMaxWithoutNotify(_colorBlobTest.BrilloValido);
+
             AlCambiarParametros(Vector2Int.zero);
+
             _guardarButton.Text = config;
         }
+    }
+
+    public ColorBlobs GenerarScriptableObject(string nombre)
+    {
+        if (!string.IsNullOrEmpty(nombre))
+        {
+            var nombreLargo = $"{CONFIG_BLOBS_LIST}.{nombre}";
+            if (PlayerPrefs.HasKey(nombreLargo))
+            {
+                var json = PlayerPrefs.GetString(nombreLargo, "{}");
+                var resultado = ScriptableObject.Instantiate(_defaultColorBlobs);
+                JsonUtility.FromJsonOverwrite(json, resultado);
+                return resultado;
+            }
+        }
+        return null;
     }
 
     private void OnEnable()
@@ -120,7 +146,7 @@ public class ColorBlobConfigurator : MonoBehaviour
     private void AlCambiarHSV(Mat hsvMat)
     {
         if (_usarHSV && hsvMat != null)
-            _imageExplorer.Texture = OpenCvSharp.Unity.MatToTexture(hsvMat, (Texture2D)_imageExplorer.Texture);
+            _imageExplorer.Texture = OpenCvSharp.Unity.MatToTexture(hsvMat, _imageExplorer.Texture as Texture2D);
     }
 
     private void AlCambiarParametros(Vector2Int _)
@@ -155,4 +181,34 @@ public class ColorBlobConfigurator : MonoBehaviour
 
         gameObject.SetActive(false);
     }
+
+#if UNITY_EDITOR
+    [CustomEditor(typeof(ColorBlobConfigurator))]
+    private class ColorBlobConfiguratorEditor : Editor
+    {
+        [SerializeField]
+        public static ColorBlobs _blobInst;
+
+        public override void OnInspectorGUI()
+        {
+            DrawDefaultInspector();
+
+            EditorGUILayout.Space();
+            foreach (var opcion in (List<string>)ListaConfigBlobs)
+            {
+                var nombreLargo = $"{CONFIG_BLOBS_LIST}.{opcion}";
+                GUILayout.Label(nombreLargo);
+                var json = PlayerPrefs.GetString(nombreLargo, "{}");
+                EditorGUILayout.TextArea(json);
+                if (GUILayout.Button("Generar"))
+                {
+                    if (_blobInst == null)
+                        _blobInst = ScriptableObject.CreateInstance<ColorBlobs>();
+                    JsonUtility.FromJsonOverwrite(json, _blobInst);
+                    Selection.activeObject = _blobInst;
+                }
+            }
+        }
+    }
+#endif
 }
