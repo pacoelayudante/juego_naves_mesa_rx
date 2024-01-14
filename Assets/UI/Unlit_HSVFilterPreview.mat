@@ -41,5 +41,5 @@ Material:
     - _VMin: 0.447
     m_Colors:
     - _HSVMax: {r: 0.45078585, g: 1, b: 1, a: 1}
-    - _HSVMin: {r: 0.1221388, g: 0.06301003, b: 0, a: 1}
+    - _HSVMin: {r: 0.14702728, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

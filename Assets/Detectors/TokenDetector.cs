@@ -21,6 +21,15 @@ public class TokenDetector : ScriptableObject
     public ColorBlobs _blobsAmarillos;
     public ColorBlobs _blobsFuxia;
 
+    [SerializeField, Range(0, 100f)]
+    public float _minBlobsSqArea = 0f;
+
+    public float MinBlobsSqArea
+    {
+        get => _minBlobsSqArea;
+        set => _minBlobsSqArea = value;
+    }
+
     [SerializeField]
     private ShapeMatchModes _shapeMatchModes = ShapeMatchModes.I3;
 
@@ -100,18 +109,39 @@ public class TokenDetector : ScriptableObject
             var moments = Cv2.Moments(contorno);
             Point2d centroide = moments.M00 == 0 ? centroFallback : new Point2d((moments.M10 / moments.M00), (moments.M01 / moments.M00));
 
-            if (puntosArmas.Count > 0)
-            {
-                var centralActual = puntosArmas[indiceArmaCentral];
-                var dMin = centroideContorno.DistanceTo(centralActual);
-                var dNueva = centroideContorno.DistanceTo(centroide);
-                if (dNueva < dMin)
-                {
-                    indiceArmaCentral = puntosArmas.Count;
-                }
-            }
+            // if (puntosArmas.Count > 0)
+            // {
+            // var centralActual = puntosArmas[indiceArmaCentral];
+            // var dMin = centroideContorno.DistanceTo(centralActual);
+            // var dNueva = centroideContorno.DistanceTo(centroide);
+            // if (dNueva < dMin)
+            // {
+            //     indiceArmaCentral = puntosArmas.Count;
+            // }
+            // }
 
             puntosArmas.Add(centroide);
+
+            if (puntosArmas.Count > 1)
+            {
+                var centro = new Point2d();
+                foreach (var arma in puntosArmas)
+                    centro += arma;
+                centro *= 1d / puntosArmas.Count;
+
+                var dMin = centro.DistanceTo(puntosArmas[0]);
+                indiceArmaCentral = 0;
+                for (int i = 1; i < puntosArmas.Count; i++)
+                {
+                    var dNueva = centro.DistanceTo(puntosArmas[i]);
+                    if (dNueva < dMin)
+                    {
+                        dMin = dNueva;
+                        indiceArmaCentral = i;
+                    }
+                }
+
+            }
         }
     }
 
@@ -141,13 +171,22 @@ public class TokenDetector : ScriptableObject
             cvBBox.Width += 2;
             cvBBox.Height += 2;
 
+            if (cvBBox.X < 0)
+                cvBBox.X = 0;
+            if (cvBBox.Y < 0)
+                cvBBox.Y = 0;
+            if (cvBBox.X + cvBBox.Width > matBinario.Width)
+                cvBBox.Width = matBinario.Width - cvBBox.X;
+            if (cvBBox.Y + cvBBox.Height > matBinario.Height)
+                cvBBox.Height = matBinario.Height - cvBBox.Y;
+
             using (var matBinarioRoi = new Mat(matBinario, cvBBox))
             using (var matDilate = new Mat())
             // using (var matKernel = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(5, 5)))
             // using (var matKernel = new Mat())
             {
                 Cv2.DistanceTransform(matBinarioRoi, matBinarioRoi, DistanceTypes.C, DistanceMaskSize.Mask3);
-                Cv2.ConvertScaleAbs(matBinarioRoi, matBinarioRoi, 60f, 0f);
+                Cv2.ConvertScaleAbs(matBinarioRoi, matBinarioRoi, 2f, 0f);
                 Cv2.MinMaxLoc(matBinarioRoi, out double minValue, out double maxValue);
                 // Debug.Log($"min value es {minValue} y maxValue es {maxValue}");
                 // Cv2.Dilate(matBinarioRoi, matDilate, matKernel);
@@ -240,10 +279,18 @@ public class TokenDetector : ScriptableObject
 
             resultados.tokensPurpura = new();
 
+            var minBlobsArea = _minBlobsSqArea * _minBlobsSqArea;
+
             for (int i = 0; i < contornosP.Length; i++)
             {
                 if (contornosP[i].Length <= 2) // una lina sin area ni nada muy complicado.. o un punto osea nada que ver
                     continue;
+
+                if (minBlobsArea > 0)
+                {
+                    if (Cv2.ContourArea(contornosP[i]) < minBlobsArea)
+                        continue;
+                }
 
                 var nuevoToken = new TokenEncontrado(contornosP[i], hueInputMat.Height, _tokenTemplates.tokenTemplates, _shapeMatchModes)
                 { equipo = EQUIPO_PURPURA };
@@ -261,6 +308,12 @@ public class TokenDetector : ScriptableObject
             {
                 if (contornosA[i].Length <= 2) // una lina sin area ni nada muy complicado.. o un punto osea nada que ver
                     continue;
+
+                if (minBlobsArea > 0)
+                {
+                    if (Cv2.ContourArea(contornosA[i]) < minBlobsArea)
+                        continue;
+                }
 
                 var nuevoToken = new TokenEncontrado(contornosA[i], hueInputMat.Height, _tokenTemplates.tokenTemplates, _shapeMatchModes)
                 { equipo = EQUIPO_AMARILLO };
@@ -294,6 +347,15 @@ public class TokenDetector : ScriptableObject
 
             for (int i = 0; i < contornosF.Length; i++)
             {
+                if (contornosF[i].Length <= 2) // una lina sin area ni nada muy complicado.. o un punto osea nada que ver
+                    continue;
+
+                if (minBlobsArea > 0)
+                {
+                    if (Cv2.ContourArea(contornosF[i]) < minBlobsArea)
+                        continue;
+                }
+
                 var cvBBox = Cv2.BoundingRect(contornosF[i]);
 
                 // si esta adentro de algun contorno, el valor es positivo y esta dentro de otro token asique lo ignoramos

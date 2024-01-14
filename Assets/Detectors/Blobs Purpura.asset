@@ -9,16 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8dea1d134b9f8364283d3951db1dd521, type: 3}
-  m_Name: ListaEscudos
+  m_Script: {fileID: 11500000, guid: 35da7c507eaea0d44801574cca223132, type: 3}
+  m_Name: Blobs Purpura
   m_EditorClassIdentifier: 
-  escudosLevels:
-  - Escudos:
-    - {x: 1, y: 1.02}
-  - Escudos:
-    - {x: 1, y: 1.02}
-    - {x: 0.3, y: 1.5}
-  - Escudos:
-    - {x: 1, y: 1.02}
-    - {x: 0.5, y: 1.1}
-    - {x: 0.3, y: 1.2}
+  _hue: 142
+  _hueTolerance: 20
+  _saturacionValida: {x: 39, y: 255}
+  _brilloValido: {x: 20, y: 131}
+  _retrievalModes: 0
+  _contourApproximationModes: 4

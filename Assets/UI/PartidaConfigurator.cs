@@ -40,7 +40,7 @@ public class PartidaConfigurator : MonoBehaviour
         _selectConfig.AlEditarConfig += AbrirEditorDetector;
 
         _iniciarPartida.onClick.AddListener(IniciarPartida);
-        
+
         _selectConfig.MostrarOpciones(DetectorTokensConfigurator.ListaDetectores, DetectorTokensConfigurator.ConfigSeleccionada);
     }
 
@@ -48,8 +48,9 @@ public class PartidaConfigurator : MonoBehaviour
     {
         if (_selectConfig.OpcionActual != null)
         {
-            // hacer cuestion
             DetectorTokensConfigurator.ConfigSeleccionada = _selectConfig.OpcionActual;
+
+            UnityEngine.SceneManagement.SceneManager.LoadScene(1);
         }
     }
 

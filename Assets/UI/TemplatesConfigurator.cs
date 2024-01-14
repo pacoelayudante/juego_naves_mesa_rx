@@ -19,6 +19,16 @@ public class TemplatesConfigurator : MonoBehaviour
         set => PlayerPrefs.SetString(CONFIG_TEMPLATES_LIST, JsonUtility.ToJson(value));
     }
 
+    public static void LoadConfiguation(TokenTemplates configuration, string loadName)
+    {
+        var nombreLargo = $"{CONFIG_TEMPLATES_LIST}.{loadName}";
+        if (PlayerPrefs.HasKey(nombreLargo))
+        {
+            var json = PlayerPrefs.GetString(nombreLargo, "{}");
+            JsonUtility.FromJsonOverwrite(json, configuration);
+        }
+    }
+
     [SerializeField]
     SelectorConfig _configToDetect;
     [SerializeField]

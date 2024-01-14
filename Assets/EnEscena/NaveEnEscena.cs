@@ -8,6 +8,13 @@ using OpenCvSharp;
 using UnityEditor;
 #endif
 
+public class Disparo
+{
+    public NaveEnEscena origen;
+    public NaveEnEscena receptor;
+    public RaycastHit2D rayo;
+}
+
 public class NaveEnEscena : MonoBehaviour
 {
     public class StaticMat
@@ -35,10 +42,15 @@ public class NaveEnEscena : MonoBehaviour
         public static implicit operator Material(StaticMat stMat) => stMat == null ? null : stMat.Material;
     }
 
-    private static StaticMat MatDefault = new StaticMat();
+    // private static StaticMat MatDefault = new StaticMat();
     private static RaycastHit2D[] Hits = new RaycastHit2D[3];
 
-    private static readonly Color[] colors = new Color[] { Color.green, Color.blue };
+
+    // private static readonly Color[] colors = new Color[] { Color.green, Color.blue };
+
+    public Gradient gradientLaser;
+
+    public TokenTemplates.TokenTemplate template;
 
     public int equipo;
     public Vector2[] armas;
@@ -49,13 +61,41 @@ public class NaveEnEscena : MonoBehaviour
     public bool DisparoPreparado = false;
 
     private List<Ray2D> rayos = new();
-    private Collider2D _colliders;
+
+
+    private List<Collider2D> _colliders = new();
+
+    private Mesh _mesh;
 
     private Vector2[] apuntadores = new Vector2[0];
     public int indiceApuntadoreCentral;
 
-    public void Inicializar(TokenDetector.TokenEncontrado encontrado)
+    public List<Disparo> _disparosRecibidos = new();
+
+    public Vector3 Centro { get; private set; }
+
+    public bool ColliderEnabled
     {
+        get => _colliders[0].enabled;
+        set
+        {
+            foreach (var collider in _colliders)
+                collider.enabled = value;
+        }
+    }
+
+    public int Orden => template.ordenDeDisparo;
+
+    void OnDestroy()
+    {
+        Destroy(_mesh);
+    }
+
+    public void Inicializar(TokenDetector.TokenEncontrado encontrado, PlasmarEscenario configEscena)
+    {
+        // if (material == null)
+        //     material = MatDefault;
+
         if (encontrado.areaRect <= 4)
         {
             Debug.Log($"area cuatro o menos {this}", this);
@@ -66,6 +106,7 @@ public class NaveEnEscena : MonoBehaviour
         var path = new Vector2[encontrado.contorno.Length];
 
         equipo = encontrado.equipo;
+        template = encontrado.TemplateMasPosible;
 
         for (int i = 0; i < path.Length; i++)
         {
@@ -74,15 +115,18 @@ public class NaveEnEscena : MonoBehaviour
         }
         meshcol.SetPath(0, path);
 
-        _colliders = meshcol;
+        _colliders.Add(meshcol);
 
-        gameObject.AddComponent<MeshFilter>().sharedMesh = meshcol.CreateMesh(useBodyPosition: false, useBodyRotation: false);
+        _mesh = gameObject.AddComponent<MeshFilter>().sharedMesh = meshcol.CreateMesh(useBodyPosition: false, useBodyRotation: false);
         var mr = gameObject.AddComponent<MeshRenderer>();
-        mr.sharedMaterial = MatDefault;
+        // mr.sharedMaterial = material;
+        mr.sharedMaterial = configEscena._mats[equipo];
+        Centro = mr.bounds.center;
 
-        MaterialPropertyBlock materialProperty = new MaterialPropertyBlock();
-        materialProperty.SetColor("_Color", colors[equipo]);
-        mr.SetPropertyBlock(materialProperty);
+        // MaterialPropertyBlock materialProperty = new MaterialPropertyBlock();
+        // materialProperty.SetColor("_Color", colors[equipo]);
+        // materialProperty.SetColor("_BaseColor", colors[equipo]);
+        // mr.SetPropertyBlock(materialProperty);
 
         armas = new Vector2[encontrado.puntosArmas.Count];
         for (int i = 0; i < armas.Length; i++)
@@ -100,6 +144,16 @@ public class NaveEnEscena : MonoBehaviour
             var centroideHull = new Vector2((float)encontrado.centroideHull.X, (float)encontrado.centroideHull.Y);
 
             rayos.Add(new Ray2D(centroide, centroideHull - centroide));
+        }
+
+        var centro = new Vector2(encontrado.centroCirculo.X, encontrado.centroCirculo.Y);
+        foreach (var escudo in template.escudos)
+        {
+            var escudoEnEscena = EscudoEnEscena.Inicializar(this, centro, encontrado.radioCirculo, configEscena.segmentosEscudos, escudo, configEscena._escudoMat);
+            _colliders.AddRange(escudoEnEscena._colliders);
+
+            float escalaAcomodarTam = configEscena.expectedImageSize / Mathf.Max(CVManager.Imagen.width, CVManager.Imagen.height);
+            escudoEnEscena.escalaAcomodarTam = escalaAcomodarTam;
         }
     }
 
@@ -180,7 +234,9 @@ public class NaveEnEscena : MonoBehaviour
         {
             foreach (var p in apuntadores)
             {
-                Gizmos.DrawSphere(p, 2f);
+                Gizmos.DrawSphere(p, 6f);
+                if (p==apuntadores[indiceApuntadoreCentral])
+                    Gizmos.DrawSphere(p, 9f);
             }
         }
 
@@ -188,7 +244,9 @@ public class NaveEnEscena : MonoBehaviour
         {
             foreach (var p in armas)
             {
-                Gizmos.DrawCube(p, Vector2.one * 2f);
+                Gizmos.DrawCube(p, Vector2.one * 6f);
+                if (p==armas[indiceArmaCentral])
+                    Gizmos.DrawCube(p, Vector2.one * 9f);
             }
         }
 
@@ -204,9 +262,9 @@ public class NaveEnEscena : MonoBehaviour
                 for (int i = 0; i < hitCant; i++)
                 {
                     var hit = Hits[i];
-                    
+
                     Gizmos.DrawLine(r.origin, r.GetPoint(hit.distance));
-                    Gizmos.DrawSphere(hit.point, 2f);
+                    Gizmos.DrawSphere(hit.point, 6f);
 
                 }
                 Gizmos.color = Color.white;
@@ -214,12 +272,17 @@ public class NaveEnEscena : MonoBehaviour
         }
     }
 
-    public void CalcularRayos()
+    public void RecibirDisparo(Disparo disparo)
+    {
+        _disparosRecibidos.Add(disparo);
+    }
+
+    public void CalcularRayos(Material rayoMat, Sprite escudoHit)
     {
         if (!DisparoPreparado)
             return;
 
-        _colliders.enabled = false;
+        // _colliders.enabled = false;
 
         foreach (var rayo in rayos)
         {
@@ -234,10 +297,25 @@ public class NaveEnEscena : MonoBehaviour
             line.useWorldSpace = false;
             line.SetPosition(0, rayo.origin);
             line.SetPosition(1, rayo.GetPoint(hitDist));
-            line.sharedMaterial = MatDefault;
-            line.startColor = line.endColor = hitCant == 0 ? Color.black : Color.red;
+            line.sharedMaterial = rayoMat;
+            if (hitCant == 0)
+                line.startColor = line.endColor = Color.black;
+            else
+            {
+                line.colorGradient = gradientLaser;
+                if (Hits[0].transform.TryGetComponent<NaveEnEscena>(out NaveEnEscena naveTocada))
+                {
+                    naveTocada.RecibirDisparo(new Disparo() { origen = this, receptor = naveTocada, rayo = Hits[0] });
+                }
+                else if (Hits[0].transform.TryGetComponent<EscudoEnEscena>(out EscudoEnEscena escudo))
+                {
+                    var disparo = new Disparo() { origen = this, receptor = escudo._nave, rayo = Hits[0] };
+                    escudo._nave.RecibirDisparo(disparo);
+                    escudo.Hit(disparo, escudoHit);
+                }
+            }
         }
 
-        _colliders.enabled = true;
+        // _colliders.enabled = true;
     }
 }

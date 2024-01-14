@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -9,7 +10,6 @@ using UnityEditor;
 public class DetectorTokensConfigurator : MonoBehaviour
 {
     private const string CONFIG_DETECTOR_SEL = "CONFIG_DETECTOR_SEL";
-
     private const string CONFIG_DETECTOR_LIST = "CONFIG_DETECTOR_LIST";
 
     public static StringListWrapper ListaDetectores
@@ -24,12 +24,22 @@ public class DetectorTokensConfigurator : MonoBehaviour
         set => PlayerPrefs.SetString(CONFIG_DETECTOR_SEL, value);
     }
 
+    public static ConfigNames LoadConfigNames(string config)
+    {
+        var nombreLargo = $"{CONFIG_DETECTOR_LIST}.{config}";
+        if (PlayerPrefs.HasKey(nombreLargo))
+            return JsonUtility.FromJson<ConfigNames>(PlayerPrefs.GetString(nombreLargo, "{}"));
+
+        return null;
+    }
+
     public class ConfigNames
     {
         public string jugA;
         public string jugB;
         public string especiales;
         public string tokens;
+        public float minArea;
     }
 
     public event System.Action<string> AlGuardarConfiguracion;
@@ -42,6 +52,8 @@ public class DetectorTokensConfigurator : MonoBehaviour
     SelectorConfig _configEspeciales;
     [SerializeField]
     SelectorConfig _configTokens;
+    [SerializeField]
+    Slider _minAreaSlider;
 
     [SerializeField]
     private InputGuardarConfig _guardarButton;
@@ -64,7 +76,7 @@ public class DetectorTokensConfigurator : MonoBehaviour
         _configEspeciales.AlEditarConfig += AbrirEditorBlobs;
 
         _configTokens.AlEditarConfig += AbrirEditorTemplates;
-        
+
         _guardarButton.OnSave += Guardar;
     }
 
@@ -115,9 +127,6 @@ public class DetectorTokensConfigurator : MonoBehaviour
 
     public void Configurar(string config)
     {
-        if (_configNames == null)
-            _configNames = new();
-
         if (config == null)
         {
             _configNames = new();
@@ -126,7 +135,7 @@ public class DetectorTokensConfigurator : MonoBehaviour
         else
         {
             var nombre = $"{CONFIG_DETECTOR_LIST}.{config}";
-            JsonUtility.FromJsonOverwrite(nombre, _configNames);
+            _configNames = JsonUtility.FromJson<ConfigNames>(PlayerPrefs.GetString(nombre, "{}"));
             _guardarButton.Text = config;
         }
 
@@ -134,6 +143,7 @@ public class DetectorTokensConfigurator : MonoBehaviour
         _configJugB.OpcionActual = _configNames.jugB;
         _configEspeciales.OpcionActual = _configNames.especiales;
         _configTokens.OpcionActual = _configNames.tokens;
+        _minAreaSlider.value = _configNames.minArea;
     }
 
     private void Guardar(string nombre)
@@ -152,6 +162,7 @@ public class DetectorTokensConfigurator : MonoBehaviour
             _configNames.jugB = _configJugB.OpcionActual;
             _configNames.especiales = _configEspeciales.OpcionActual;
             _configNames.tokens = _configTokens.OpcionActual;
+            _configNames.minArea = _minAreaSlider.value;
             PlayerPrefs.SetString(nombreLargo, JsonUtility.ToJson(_configNames));
         }
 
@@ -159,11 +170,11 @@ public class DetectorTokensConfigurator : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    [CustomEditor(typeof(TemplatesConfigurator))]
-    private class TemplatesConfiguratorEditor : Editor
+    [CustomEditor(typeof(DetectorTokensConfigurator))]
+    private class DetectorTokensConfiguratorEditor : Editor
     {
         [SerializeField]
-        public static TokenTemplates _blobInst;
+        public static TokenDetector _detectorInst;
 
         public override void OnInspectorGUI()
         {
@@ -182,12 +193,29 @@ public class DetectorTokensConfigurator : MonoBehaviour
                 }
                 if (GUILayout.Button("Generar"))
                 {
-                    if (_blobInst == null)
-                        _blobInst = ScriptableObject.CreateInstance<TokenTemplates>();
-                    JsonUtility.FromJsonOverwrite(json, _blobInst);
-                    Selection.activeObject = _blobInst;
+                    if (_detectorInst == null)
+                    {
+                        _detectorInst = ScriptableObject.CreateInstance<TokenDetector>();
+                        _detectorInst._blobsAmarillos = ScriptableObject.CreateInstance<ColorBlobs>();
+                        _detectorInst._blobsFuxia = ScriptableObject.CreateInstance<ColorBlobs>();
+                        _detectorInst._blobsPurpura = ScriptableObject.CreateInstance<ColorBlobs>();
+                        _detectorInst._tokenTemplates = ScriptableObject.CreateInstance<TokenTemplates>();
+                    }
+
+                    var configNames = JsonUtility.FromJson<ConfigNames>(json);
+                    CargarDetector(_detectorInst, configNames);
+
+                    Selection.activeObject = _detectorInst;
                 }
             }
+        }
+
+        private void CargarDetector(TokenDetector detector, ConfigNames configNames)
+        {
+            ColorBlobConfigurator.LoadConfiguation(_detectorInst._blobsPurpura, configNames.jugA);
+            ColorBlobConfigurator.LoadConfiguation(_detectorInst._blobsAmarillos, configNames.jugB);
+            ColorBlobConfigurator.LoadConfiguation(_detectorInst._blobsFuxia, configNames.especiales);
+            TemplatesConfigurator.LoadConfiguation(_detectorInst._tokenTemplates, configNames.tokens);
         }
     }
 #endif

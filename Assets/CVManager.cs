@@ -48,18 +48,30 @@ public static class CVManager
             _onHSVMatGenerado?.Invoke(HsvMat);
     }
 
+    [RuntimeInitializeOnLoadMethod]
+    private static void Init()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneUnloaded += (escena) =>
+        {
+            _onImagenCambiada = null;
+            _onHSVMatGenerado = null;
+        };
+    }
+
     public static void AlCambiarImagen(System.Action<Texture2D> evento, bool ejecutarImediato = true)
     {
-        evento?.Invoke(Imagen);
         if (ejecutarImediato)
-            _onImagenCambiada += evento;
+            evento?.Invoke(Imagen);
+
+        _onImagenCambiada += evento;
     }
 
     public static void AlGenerarHSVMat(System.Action<Mat> evento, bool ejecutarImediato = true)
     {
-        evento?.Invoke(HsvMat);
         if (ejecutarImediato)
-            _onHSVMatGenerado += evento;
+            evento?.Invoke(HsvMat);
+
+        _onHSVMatGenerado += evento;
     }
 
     public static Rect ConvertirBBoxAUVRect(CvRect cvRect, float width, float height, Vector4 margenes = default(Vector4))

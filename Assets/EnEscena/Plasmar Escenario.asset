@@ -12,6 +12,47 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bd4b8560e642cf448e3c164dcbc6add, type: 3}
   m_Name: Plasmar Escenario
   m_EditorClassIdentifier: 
+  _imagenHits:
+  - {fileID: 1271965396, guid: 5def61c8872be534a8c65f3e8f1782a3, type: 3}
+  - {fileID: 1090153375, guid: 43711cb09ed404645aae2f51ce5907ab, type: 3}
+  - {fileID: -1519412815, guid: 809062171aa22844ba0cb5f31521bf33, type: 3}
+  _imagenHitEscudo: {fileID: -1248560154, guid: 2a4e862a75d3fbf4eb0b7c0a916ab757, type: 3}
   _tokenDetector: {fileID: 11400000, guid: 81a51cb297baf2b41ad44e9215dafdf7, type: 2}
+  expectedImageSize: 930
   defaultDistLaserMiss: 800
   rootSceneScale: {x: 1, y: -1, z: 1}
+  gradientLaser:
+    serializedVersion: 2
+    key0: {r: 1, g: 1, b: 1, a: 1}
+    key1: {r: 1, g: 0, b: 0, a: 1}
+    key2: {r: 0, g: 0, b: 0, a: 0}
+    key3: {r: 0, g: 0, b: 0, a: 0}
+    key4: {r: 0, g: 0, b: 0, a: 0}
+    key5: {r: 0, g: 0, b: 0, a: 0}
+    key6: {r: 0, g: 0, b: 0, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 65535
+    ctime2: 0
+    ctime3: 0
+    ctime4: 0
+    ctime5: 0
+    ctime6: 0
+    ctime7: 0
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_NumColorKeys: 2
+    m_NumAlphaKeys: 2
+  _mats:
+  - {fileID: 2100000, guid: e8409635a5d986d4bb03d9e0b0155c56, type: 2}
+  - {fileID: 2100000, guid: 27b18eb2216dfe340accfba6daa3aa81, type: 2}
+  _rayoMat: {fileID: 2100000, guid: 15f588eef61c4a046a720517c7b7de63, type: 2}
+  _escudoMat: {fileID: 2100000, guid: b455cc1abdf04434eb45362480e58df7, type: 2}
+  segmentosEscudos: 4

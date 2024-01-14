@@ -18,6 +18,16 @@ public class ColorBlobConfigurator : MonoBehaviour
         set => PlayerPrefs.SetString(CONFIG_BLOBS_LIST, JsonUtility.ToJson(value));
     }
 
+    public static void LoadConfiguation(ColorBlobs configuration, string loadName)
+    {
+        var nombreLargo = $"{CONFIG_BLOBS_LIST}.{loadName}";
+        if (PlayerPrefs.HasKey(nombreLargo))
+        {
+            var json = PlayerPrefs.GetString(nombreLargo, "{}");
+            JsonUtility.FromJsonOverwrite(json, configuration);
+        }
+    }
+
     [SerializeField]
     private ImageExplorer _imageExplorer;
     [SerializeField]
@@ -26,6 +36,8 @@ public class ColorBlobConfigurator : MonoBehaviour
     MinMaxUIControl _satControl;
     [SerializeField]
     MinMaxUIControl _valControl;
+    [SerializeField]
+    Slider _simplifySlider;
 
     public bool _usarColorLineal = true;
     public bool _usarHSV = true;
@@ -55,6 +67,7 @@ public class ColorBlobConfigurator : MonoBehaviour
         _hueControl.AlActualizar += AlCambiarParametros;
         _satControl.AlActualizar += AlCambiarParametros;
         _valControl.AlActualizar += AlCambiarParametros;
+        _simplifySlider.onValueChanged.AddListener((val)=>AlCambiarParametros(default(Vector2Int)));
 
         _testButton.onClick.AddListener(TestColorBlob);
 
@@ -89,6 +102,7 @@ public class ColorBlobConfigurator : MonoBehaviour
             _hueControl.SetMinMaxWithoutNotify(_colorBlobTest.HueValido);
             _satControl.SetMinMaxWithoutNotify(_colorBlobTest.SaturacionValida);
             _valControl.SetMinMaxWithoutNotify(_colorBlobTest.BrilloValido);
+            _simplifySlider.SetValueWithoutNotify(_colorBlobTest.SimplifyContour);
 
             AlCambiarParametros(Vector2Int.zero);
 
@@ -166,6 +180,7 @@ public class ColorBlobConfigurator : MonoBehaviour
         _colorBlobTest.HueValido = _hueControl.MinMaxValue;
         _colorBlobTest.SaturacionValida = _satControl.MinMaxValue;
         _colorBlobTest.BrilloValido = _valControl.MinMaxValue;
+        _colorBlobTest.SimplifyContour = _simplifySlider.value;
     }
 
     private void TestColorBlob()

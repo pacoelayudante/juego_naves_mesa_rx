@@ -5,6 +5,7 @@ using Rect = UnityEngine.Rect;
 using CvRect = OpenCvSharp.Rect;
 using OpenCvSharp;
 using UnityEngine.UI;
+using TMPro;
 
 public class TestColorBlob : MonoBehaviour
 {
@@ -30,6 +31,7 @@ public class TestColorBlob : MonoBehaviour
     private Transform _templateDemo;
 
     private List<RawImage> _demoPool = new();
+    private Dictionary<RawImage, TMP_Text> _demoPoolToText = new();
 
     void Awake()
     {
@@ -91,16 +93,22 @@ public class TestColorBlob : MonoBehaviour
 
                 for (int i = 0; i < contornos.Length; i++)
                 {
+                    if (contornos[i].Length <= 2) // una lina sin area ni nada muy complicado.. o un punto osea nada que ver
+                        continue;
+
                     while (_demoPool.Count <= i)
                     {
-                        var newDemo = Instantiate(_templateDemo, _templateDemo.parent);
-                        _demoPool.Add(newDemo.GetComponentInChildren<RawImage>());
+                        var newDemo = Instantiate(_templateDemo, _templateDemo.parent).GetComponentInChildren<RawImage>(includeInactive: true);
+                        _demoPool.Add(newDemo);
+                        _demoPoolToText.Add(newDemo, newDemo.transform.parent.GetComponentInChildren<TMP_Text>(includeInactive: true));
                     }
 
                     _demoPool[i].transform.parent.gameObject.SetActive(true);
 
                     _demoPool[i].texture = _resultadoBinarioTex2D;
                     _demoPool[i].uvRect = CVManager.ConvertirBBoxAUVRect(Cv2.BoundingRect(contornos[i]), matWidth, matHeight, Vector4.one * _margenesDemo);
+
+                    _demoPoolToText[_demoPool[i]].text = Cv2.ContourArea(contornos[i]).ToString("0.0");
 
                     var escala = Vector3.one;
                     escala.y = matAspect * _demoPool[i].uvRect.height / _demoPool[i].uvRect.width;

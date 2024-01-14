@@ -18,6 +18,9 @@ public class ColorBlobs : ScriptableObject
     [SerializeField, MinMaxSlider(0, 255)]
     Vector2Int _brilloValido = new Vector2Int(0, 255);
 
+    [SerializeField, Range(0f, 10f)]
+    float _simplifyContour = 0f;
+
     public Vector2Int HueValido
     {
         get => _hueValido;
@@ -32,6 +35,12 @@ public class ColorBlobs : ScriptableObject
     {
         get => _brilloValido;
         set => _brilloValido = value;
+    }
+
+    public float SimplifyContour
+    {
+        get => _simplifyContour;
+        set => _simplifyContour = value;
     }
 
     [Space]
@@ -59,6 +68,12 @@ public class ColorBlobs : ScriptableObject
         {
             Cv2.FindContours(clonePrimerFiltro, out resultadoContornos, out jerarquia, _retrievalModes, _contourApproximationModes);
         }
+
+        // if (_simplifyContour > 0f)
+        // {
+        //     for (int i = 0; i < resultadoContornos.Length; i++)
+        //         resultadoContornos[i] = Cv2.ApproxPolyDP(resultadoContornos[i], _simplifyContour, closed: true);
+        // }
     }
 
 #if UNITY_EDITOR
