@@ -54,10 +54,7 @@ public class ColorBlobConfigurator : MonoBehaviour
     [SerializeField]
     private ColorBlobs _defaultColorBlobs;
     ColorBlobs _colorBlobTest;
-
-    private Color ColorFiltroMin => new Color32((byte)_hueControl.MinMaxValue.x, (byte)_satControl.MinMaxValue.x, (byte)_valControl.MinMaxValue.x, 255);
-    private Color ColorFiltroMax => new Color32((byte)_hueControl.MinMaxValue.y, (byte)_satControl.MinMaxValue.y, (byte)_valControl.MinMaxValue.y, 255);
-
+    
     void Awake()
     {
         CVManager.AlCambiarImagen(AlCambiarImagen);
@@ -67,7 +64,7 @@ public class ColorBlobConfigurator : MonoBehaviour
         _hueControl.AlActualizar += AlCambiarParametros;
         _satControl.AlActualizar += AlCambiarParametros;
         _valControl.AlActualizar += AlCambiarParametros;
-        _simplifySlider.onValueChanged.AddListener((val)=>AlCambiarParametros(default(Vector2Int)));
+        _simplifySlider.onValueChanged.AddListener((val) => AlCambiarParametros(default(Vector2Int)));
 
         _testButton.onClick.AddListener(TestColorBlob);
 
@@ -166,16 +163,34 @@ public class ColorBlobConfigurator : MonoBehaviour
     private void AlCambiarParametros(Vector2Int _)
     {
         var mat = _imageExplorer.Material;
+
+        Color colMin = Color.white;
+        Color colMax = Color.white;
+        Vector4 invertir = Vector4.zero;
+
+        invertir[0] = _hueControl.MinMaxValue.x > _hueControl.MinMaxValue.y ? 1 : 0;
+        invertir[1] = _satControl.MinMaxValue.x > _satControl.MinMaxValue.y ? 1 : 0;
+        invertir[2] = _valControl.MinMaxValue.x > _valControl.MinMaxValue.y ? 1 : 0;
+
+        colMin[0] = invertir[0] == 1 ? _hueControl.MinMaxValue.y / 255f : _hueControl.MinMaxValue.x / 255f;
+        colMax[0] = invertir[0] == 1 ? _hueControl.MinMaxValue.x / 255f : _hueControl.MinMaxValue.y / 255f;
+        colMin[1] = invertir[1] == 1 ? _satControl.MinMaxValue.y / 255f : _satControl.MinMaxValue.x / 255f;
+        colMax[1] = invertir[1] == 1 ? _satControl.MinMaxValue.x / 255f : _satControl.MinMaxValue.y / 255f;
+        colMin[2] = invertir[2] == 1 ? _valControl.MinMaxValue.y / 255f : _valControl.MinMaxValue.x / 255f;
+        colMax[2] = invertir[2] == 1 ? _valControl.MinMaxValue.x / 255f : _valControl.MinMaxValue.y / 255f;
+
         if (_usarColorLineal)
         {
-            mat.SetColor("_HSVMin", ColorFiltroMin.linear);
-            mat.SetColor("_HSVMax", ColorFiltroMax.linear);
+            mat.SetColor("_HSVMin", colMin.linear);
+            mat.SetColor("_HSVMax", colMax.linear);
         }
         else
         {
-            mat.SetColor("_HSVMin", ColorFiltroMin);
-            mat.SetColor("_HSVMax", ColorFiltroMax);
+            mat.SetColor("_HSVMin", colMin);
+            mat.SetColor("_HSVMax", colMax);
         }
+
+        mat.SetVector("_Invertir", invertir);
 
         _colorBlobTest.HueValido = _hueControl.MinMaxValue;
         _colorBlobTest.SaturacionValida = _satControl.MinMaxValue;

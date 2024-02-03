@@ -51,15 +51,63 @@ public class ColorBlobs : ScriptableObject
 
     public void FromHueMat(Mat hueInputMat, TipoHue tipoHue, Mat resultadoBinario, out Point[][] resultadoContornos, out HierarchyIndex[] jerarquia, Mat mask = null)
     {
+        var rangoHue = _hueValido;
         // cuando HSV: es hue, saturacion y valor (brillo)
         // cuando HLS: es hue, brillo y saturacion
-        var segundoComponente = tipoHue == TipoHue.HSV ? _saturacionValida : _brilloValido;
-        var tercerComponente = tipoHue == TipoHue.HLS ? _saturacionValida : _brilloValido;
+        var rangoSegundoComponente = tipoHue == TipoHue.HSV ? _saturacionValida : _brilloValido;
+        var rangoTercerComponente = tipoHue == TipoHue.HLS ? _saturacionValida : _brilloValido;
 
-        var scalarMinimo = new Scalar(_hueValido[0], segundoComponente[0], tercerComponente[0]);
-        var scalarMaximo = new Scalar(_hueValido[1], segundoComponente[1], tercerComponente[1]);
+        // cuando el max es menor que el min, asumimos que el usuario quiere invertir el filtro
+        // para ello el proceso es un poquito mas complicado porque hay que separar los canales y coso
+        bool deboInvertirHue = HueValido.x > HueValido.y;
+        bool deboInvertirSegundoC = rangoSegundoComponente.x > rangoSegundoComponente.y;
+        bool deboInvertirTercerC = rangoTercerComponente.x > rangoTercerComponente.y;
 
-        Cv2.InRange(hueInputMat, scalarMinimo, scalarMaximo, resultadoBinario);
+        if (deboInvertirHue || deboInvertirSegundoC || deboInvertirTercerC)
+        {
+            // si algun rango debe ser invertido, ya hay que hacer toda la movida de split, sino (mas abajo) hacemos un simple in range
+            using (Mat extractedChannel = new Mat(hueInputMat.Rows, hueInputMat.Cols, hueInputMat.Type()))
+            {
+                Cv2.ExtractChannel(hueInputMat, extractedChannel, 0);
+                Scalar min = new Scalar(deboInvertirHue ? rangoHue[1] : rangoHue[0]);
+                Scalar max = new Scalar(deboInvertirHue ? rangoHue[0] : rangoHue[1]);
+                Cv2.InRange(extractedChannel, min, max, resultadoBinario);
+                if (deboInvertirHue)
+                    Cv2.BitwiseNot(resultadoBinario, resultadoBinario);
+
+                using (Mat mascarasExtra = new Mat())
+                {
+                    Cv2.ExtractChannel(hueInputMat, extractedChannel, 1);
+                    min = new Scalar(deboInvertirSegundoC ? rangoSegundoComponente[1] : rangoSegundoComponente[0]);
+                    max = new Scalar(deboInvertirSegundoC ? rangoSegundoComponente[0] : rangoSegundoComponente[1]);
+                    Cv2.InRange(extractedChannel, min, max, mascarasExtra);
+
+                    if (deboInvertirSegundoC)
+                        Cv2.BitwiseNot(mascarasExtra, mascarasExtra);
+                    Cv2.BitwiseAnd(resultadoBinario, mascarasExtra, resultadoBinario);
+
+                    Cv2.ExtractChannel(hueInputMat, extractedChannel, 2);
+                    min = new Scalar(deboInvertirTercerC ? rangoTercerComponente[1] : rangoTercerComponente[0]);
+                    max = new Scalar(deboInvertirTercerC ? rangoTercerComponente[0] : rangoTercerComponente[1]);
+                    Cv2.InRange(extractedChannel, min, max, mascarasExtra);
+
+                    if (deboInvertirTercerC)
+                        Cv2.BitwiseNot(mascarasExtra, mascarasExtra);
+                    Cv2.BitwiseAnd(resultadoBinario, mascarasExtra, resultadoBinario);
+                }
+
+
+            }
+        }
+        else // todos valores sin invertir, asique in range alcanza y sobra
+        {
+
+            var scalarMinimo = new Scalar(rangoHue[0], rangoSegundoComponente[0], rangoTercerComponente[0]);
+            var scalarMaximo = new Scalar(rangoHue[1], rangoSegundoComponente[1], rangoTercerComponente[1]);
+
+            Cv2.InRange(hueInputMat, scalarMinimo, scalarMaximo, resultadoBinario);
+        }
+
         if (mask != null)
             Cv2.Multiply(resultadoBinario, mask, resultadoBinario);
 

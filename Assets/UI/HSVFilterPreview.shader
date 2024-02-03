@@ -6,6 +6,7 @@ Shader "Unlit/HSVFilterPreview"
 
         _HSVMin ("HSV Min", Color) = (0,0,0,0)
         _HSVMax ("HSV Max", Color) = (1,1,1,1)
+        _Invertir ("Invertir", Vector) = (0,0,0,0)
 
         _Stencil("Stencil ID", Float) = 0
         _StencilComp("StencilComp", Float) = 8
@@ -53,8 +54,9 @@ Shader "Unlit/HSVFilterPreview"
             sampler2D _MainTex;
             float4 _MainTex_ST;
 
-            fixed4 _HSVMin;
-            fixed4 _HSVMax;
+            fixed3 _HSVMin;
+            fixed3 _HSVMax;
+            fixed3 _Invertir;
 
             v2f vert (appdata v)
             {
@@ -75,7 +77,7 @@ Shader "Unlit/HSVFilterPreview"
             {
                 fixed4 K = fixed4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
                 fixed4 p = lerp(fixed4(c.bg, K.wz), fixed4(c.gb, K.xy), step(c.b, c.g));
-                fixed4 q = lerp(fixed4(p.xyw, c.r), fixed4(c.r, p.yzx), step(p.x, c.r));
+                fixed4 q = lerp(fixed4(p    .xyw, c.r), fixed4(c.r, p.yzx), step(p.x, c.r));
 
                 float d = q.x - min(q.w, q.y);
                 float e = 1.0e-10;
@@ -89,16 +91,21 @@ Shader "Unlit/HSVFilterPreview"
                 hsv.r = GammaToLinearSpace(hsv.r);
                 hsv.g = GammaToLinearSpace(hsv.g);
                 hsv.b = GammaToLinearSpace(hsv.b);
+                
+                fixed3 enRango = step(_HSVMin, hsv.rgb);
 
-                fixed3 enRango = step(_HSVMin.rgb, hsv.rgb);
-                hsv.g = enRango.x * enRango.y * enRango.z;
-                enRango = step(hsv.rgb, _HSVMax.rgb);
-                hsv.g *= enRango.x * enRango.y * enRango.z;
+                enRango = enRango * step(hsv.rgb, _HSVMax);
+                enRango = lerp(enRango, 1.0-enRango, _Invertir);
+
+                fixed sat = enRango.x * enRango.y * enRango.z;
+
+                hsv.g = sat;
 
                 hsv.r = LinearToGammaSpace(hsv.r);
                 hsv.g = LinearToGammaSpace(hsv.g);
                 hsv.b = LinearToGammaSpace(hsv.b);
                 hsv.r = hsv.r*(255.0/179.0);
+                hsv.b = hsv.b*0.5 + 0.5;//levantar brillo
 
                 fixed4 col = fixed4( hsv2rgb(hsv.rgb), 1);
                 
