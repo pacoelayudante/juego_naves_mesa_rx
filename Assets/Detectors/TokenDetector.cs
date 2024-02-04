@@ -369,7 +369,7 @@ public class TokenDetector : ScriptableObject
                 resultados.medianArea = resultados.areasReferencia[resultados.areasReferencia.Count / 2];
             }
 
-            _blobsFuxia.FromHueMat(hueInputMat, tipoHue, resultadoBinario, out Point[][] contornosF, out HierarchyIndex[] jerarquias2, resultadoBinario);
+            _blobsFuxia.FromHueMat(hueInputMat, tipoHue, resultadoBinario, out Point[][] contornosF, out HierarchyIndex[] jerarquiasF, resultadoBinario);
 
             resultados.todosLosTokens = new List<TokenEncontrado>();
             resultados.todosLosTokens.AddRange(resultados.tokensPurpura);
@@ -385,9 +385,28 @@ public class TokenDetector : ScriptableObject
 
             resultados.tokensDisparadores = new();
 
-            for (int i = 0; i < contornosF.Length; i++)
+            siguienteContorno = 0;
+            if (jerarquiasA.Length > 0)
             {
-                if (contornosF[i].Length <= 2) // una lina sin area ni nada muy complicado.. o un punto osea nada que ver
+                if (jerarquiasA[siguienteContorno].Parent != -1)
+                    Debug.LogError($"primer contorno tiene parent!");
+                if (jerarquiasA[siguienteContorno].Previous != -1)
+                    Debug.LogError($"primer contorno tiene previous!");
+            }
+            else
+            {
+                siguienteContorno = -1;
+            }
+
+            while (siguienteContorno != -1)
+            {
+            // for (int i = 0; i < contornosF.Length; i++)
+            // {
+                int i = siguienteContorno;//el siguiente ahora es el actual
+                // pero al toque seteo el siguiente por si hago un early continue
+                siguienteContorno = jerarquiasF[siguienteContorno].Next;
+
+                if (contornosF[i].Length <= 4) // una lina sin area ni nada muy complicado.. o un punto osea nada que ver
                     continue;
 
                 if (minBlobsArea > 0)

@@ -150,7 +150,7 @@ public class TemplatesConfigurator : MonoBehaviour
 
                     _tokensTest.tokenTemplates.Clear();
                     //esto esta asi porque es viejo y soy vago
-                    _tokensTest.tokenTemplates.AddRange(new TokenTemplates.TokenTemplate[contornos.Length]);
+                    // _tokensTest.tokenTemplates.AddRange(new TokenTemplates.TokenTemplate[contornos.Length]);
 
                     float matWidth = CVManager.HsvMat.Width;
                     float matHeight = CVManager.HsvMat.Height;
@@ -186,11 +186,11 @@ public class TemplatesConfigurator : MonoBehaviour
                             _templatesPool.Add(newDemo);
                         }
 
-                        _tokensTest.tokenTemplates[i] = new TokenTemplates.TokenTemplate()
+                        _tokensTest.tokenTemplates.Add( new TokenTemplates.TokenTemplate()
                         {
                             contorno = contornos[i],
                             cvRect = Cv2.BoundingRect(contornos[i]),
-                        };
+                        });
 
                         _templatesPool[i].gameObject.SetActive(true);
                         _templatesPool[i].SetImage(_resultadoBinarioTex2D, CVManager.ConvertirBBoxAUVRect(Cv2.BoundingRect(contornos[i]), matWidth, matHeight, Vector4.zero));
