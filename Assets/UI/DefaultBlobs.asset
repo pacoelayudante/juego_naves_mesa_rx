@@ -15,5 +15,6 @@ MonoBehaviour:
   _hueValido: {x: 0, y: 255}
   _saturacionValida: {x: 0, y: 255}
   _brilloValido: {x: 0, y: 255}
-  _retrievalModes: 0
+  _simplifyContour: 0
+  _retrievalModes: 3
   _contourApproximationModes: 4

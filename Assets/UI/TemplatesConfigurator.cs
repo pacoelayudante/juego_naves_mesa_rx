@@ -26,6 +26,7 @@ public class TemplatesConfigurator : MonoBehaviour
         {
             var json = PlayerPrefs.GetString(nombreLargo, "{}");
             JsonUtility.FromJsonOverwrite(json, configuration);
+            configuration.name = loadName;
         }
     }
 
@@ -109,10 +110,12 @@ public class TemplatesConfigurator : MonoBehaviour
                 ListaTemplates = lista;
             }
 
-            for (int i = 0; i < _templatesPool.Count && i < _tokensTest.tokenTemplates.Length; i++)
+            for (int i = 0; i < _templatesPool.Count && i < _tokensTest.tokenTemplates.Count; i++)
             {
                 _templatesPool[i].Apply(_tokensTest.tokenTemplates[i], _escudosLevels);
             }
+
+            _tokensTest.tokenTemplates.RemoveAll(token => token.ordenDeDisparo == -1);
             PlayerPrefs.SetString(nombreLargo, JsonUtility.ToJson(_tokensTest));
         }
 
@@ -144,14 +147,39 @@ public class TemplatesConfigurator : MonoBehaviour
 
                     if (_tokensTest == null)
                         _tokensTest = ScriptableObject.Instantiate(_defaultTokens);
-                    _tokensTest.tokenTemplates = new TokenTemplates.TokenTemplate[contornos.Length];
+
+                    _tokensTest.tokenTemplates.Clear();
+                    //esto esta asi porque es viejo y soy vago
+                    _tokensTest.tokenTemplates.AddRange(new TokenTemplates.TokenTemplate[contornos.Length]);
 
                     float matWidth = CVManager.HsvMat.Width;
                     float matHeight = CVManager.HsvMat.Height;
                     float matAspect = matHeight / matWidth;
 
-                    for (int i = 0; i < contornos.Length; i++)
+                    int siguienteContorno = 0;
+                    if (jerarquias.Length > 0)
                     {
+                        if (jerarquias[siguienteContorno].Parent != -1)
+                            Debug.LogError($"primer contorno tiene parent!");
+                        if (jerarquias[siguienteContorno].Previous != -1)
+                            Debug.LogError($"primer contorno tiene previous!");
+                    }
+                    else
+                    {
+                        siguienteContorno = -1;
+                    }
+
+                    while (siguienteContorno != -1)
+                    {
+                        int i = siguienteContorno;//el siguiente ahora es el actual
+                                                  // pero al toque seteo el siguiente por si hago un early continue
+                        siguienteContorno = jerarquias[siguienteContorno].Next;
+                        // for (int i = 0; i < contornos.Length; i++) // <- usar las jerarquias
+                        // {
+
+                        if (contornos[i].Length <= 4) // una lina sin area ni nada muy complicado.. o un punto osea nada que ver
+                            continue;
+
                         while (_templatesPool.Count <= i)
                         {
                             var newDemo = Instantiate(_templateTokenConfigUI, _templateTokenConfigUI.transform.parent);
@@ -192,7 +220,7 @@ public class TemplatesConfigurator : MonoBehaviour
             demo.gameObject.SetActive(false);
         }
 
-        for (int i = 0; i < _tokensTest.tokenTemplates.Length; i++)
+        for (int i = 0; i < _tokensTest.tokenTemplates.Count; i++)
         {
             while (_templatesPool.Count <= i)
             {
@@ -202,6 +230,13 @@ public class TemplatesConfigurator : MonoBehaviour
 
             _templatesPool[i].gameObject.SetActive(true);
             _templatesPool[i].Set(_tokensTest.tokenTemplates[i]);
+
+            if (CVManager.HsvMat != null)
+            {
+                float matWidth = CVManager.HsvMat.Width;
+                float matHeight = CVManager.HsvMat.Height;
+                _templatesPool[i].SetImage(_resultadoBinarioTex2D, CVManager.ConvertirBBoxAUVRect(_tokensTest.tokenTemplates[i].cvRect, matWidth, matHeight, Vector4.zero));
+            }
         }
     }
 

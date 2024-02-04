@@ -28,7 +28,7 @@ public class TokenTemplates : ScriptableObject
 
     public enum TipoTam { Menor, Referencia, Mayor }
 
-    public TokenTemplate[] tokenTemplates;
+    public List<TokenTemplate> tokenTemplates = new();
 
 #if UNITY_EDITOR
     [CustomEditor(typeof(TokenTemplates))]
@@ -83,14 +83,14 @@ public class TokenTemplates : ScriptableObject
                         Cv2.CvtColor(testMat, testMat, _tipoHue == TipoHue.HSV ? ColorConversionCodes.BGR2HSV : ColorConversionCodes.BGR2HLS);
                         _colorBlobs.FromHueMat(testMat, _tipoHue, outBlobMat, out Point[][] contornos, out HierarchyIndex[] jerarquias);
 
-                        TokenTemplate[] tokenTemplates = new TokenTemplate[contornos.Length];
-                        for (int i = 0; i < tokenTemplates.Length; i++)
+                        List<TokenTemplate> tokenTemplates = new ();
+                        for (int i = 0; i < contornos.Length; i++)
                         {
-                            tokenTemplates[i] = new TokenTemplate()
+                            tokenTemplates.Add(new TokenTemplate()
                             {
                                 contorno = contornos[i],
                                 cvRect = Cv2.BoundingRect(contornos[i]),
-                            };
+                            });
                         }
                         _templates.tokenTemplates = tokenTemplates;
                     }

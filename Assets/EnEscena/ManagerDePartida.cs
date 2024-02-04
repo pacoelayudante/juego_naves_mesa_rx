@@ -26,11 +26,13 @@ public class ManagerDePartida : MonoBehaviour
             if (configNames != null)
             {
                 _tokenDetectorDefault = Instantiate(_tokenDetectorDefault);
-                ColorBlobConfigurator.LoadConfiguation(_tokenDetectorDefault._blobsPurpura, configNames.jugA);
-                ColorBlobConfigurator.LoadConfiguation(_tokenDetectorDefault._blobsAmarillos, configNames.jugB);
-                ColorBlobConfigurator.LoadConfiguation(_tokenDetectorDefault._blobsFuxia, configNames.especiales);
-                TemplatesConfigurator.LoadConfiguation(_tokenDetectorDefault._tokenTemplates, configNames.tokens);
+                ColorBlobConfigurator.LoadConfiguation(_tokenDetectorDefault._blobsPurpura = Instantiate(_tokenDetectorDefault._blobsPurpura), configNames.jugA);
+                ColorBlobConfigurator.LoadConfiguation(_tokenDetectorDefault._blobsAmarillos = Instantiate(_tokenDetectorDefault._blobsAmarillos), configNames.jugB);
+                ColorBlobConfigurator.LoadConfiguation(_tokenDetectorDefault._blobsFuxia = Instantiate(_tokenDetectorDefault._blobsFuxia), configNames.especiales);
+                TemplatesConfigurator.LoadConfiguation(_tokenDetectorDefault._tokenTemplates = Instantiate(_tokenDetectorDefault._tokenTemplates), configNames.tokens);
                 _tokenDetectorDefault.MinBlobsSqArea = configNames.minArea;
+
+                _tokenDetectorDefault.name = DetectorTokensConfigurator.ConfigSeleccionada;
             }
         }
 

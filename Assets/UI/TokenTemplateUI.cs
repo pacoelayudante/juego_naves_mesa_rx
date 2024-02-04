@@ -21,7 +21,7 @@ public class TokenTemplateUI : MonoBehaviour
     public void Set(TokenTemplates.TokenTemplate template)
     {
         _tamDropdown.value = (int)template.tipoTam;
-        _ordenDropdown.value = template.ordenDeDisparo;
+        _ordenDropdown.value = template.ordenDeDisparo+1;
         _escudosDropdown.value = template.escudos.Count - 1;
         _armaPowerDropdown.value = template.nivelArma;
     }
@@ -29,7 +29,7 @@ public class TokenTemplateUI : MonoBehaviour
     public void Apply(TokenTemplates.TokenTemplate target, ListaEscudos listaEscudos)
     {
         target.tipoTam = (TokenTemplates.TipoTam)_tamDropdown.value;
-        target.ordenDeDisparo = _ordenDropdown.value;
+        target.ordenDeDisparo = _ordenDropdown.value-1;
         target.escudos = listaEscudos[_escudosDropdown.value];
         target.nivelArma = _armaPowerDropdown.value;
     }
@@ -59,6 +59,9 @@ public class TokenTemplateUI : MonoBehaviour
         _ordenDropdown.options = OpcionesDesdeRangoNumeros("Orden {0}", ordenMax);
         _escudosDropdown.options = OpcionesDesdeRangoNumeros("Escudo Lvl {0}", escudosMaxLevel);
         _armaPowerDropdown.options = OpcionesDesdeRangoNumeros("Arma Lvl {0}", armasMaxLevel);
+
+        // extra orden -1 para que no se agregue el elemento
+        _ordenDropdown.options.Insert(0, new TMP_Dropdown.OptionData(){ text = "No Usar" });
     }
 
     private List<TMP_Dropdown.OptionData> OpcionesDesdeEnum<T>() where T : System.Enum

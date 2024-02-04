@@ -67,7 +67,7 @@ public class TokenDetector : ScriptableObject
         public TokenTemplates.TipoTam TipoTam => TemplateMasPosible == null ? TokenTemplates.TipoTam.Menor : TemplateMasPosible.tipoTam;
         public int OrdenDeDisparo => TemplateMasPosible == null ? -1 : TemplateMasPosible.ordenDeDisparo;
 
-        public TokenEncontrado(Point[] contorno, float hMat, TokenTemplates.TokenTemplate[] templates, ShapeMatchModes shapeMatchModes)
+        public TokenEncontrado(Point[] contorno, float hMat, List<TokenTemplates.TokenTemplate> templates, ShapeMatchModes shapeMatchModes)
         {
             cvBBox = Cv2.BoundingRect(contorno);
             this.contorno = contorno;
@@ -277,12 +277,29 @@ public class TokenDetector : ScriptableObject
             resultados = new();
             _blobsPurpura.FromHueMat(hueInputMat, tipoHue, resultadoBinario, out Point[][] contornosP, out HierarchyIndex[] jerarquiasP);
 
-            resultados.tokensPurpura = new();
-
             var minBlobsArea = _minBlobsSqArea * _minBlobsSqArea;
 
-            for (int i = 0; i < contornosP.Length; i++)
+            resultados.tokensPurpura = new();
+
+            var siguienteContorno = 0;
+            if (jerarquiasP.Length > 0)
             {
+                if (jerarquiasP[siguienteContorno].Parent != -1)
+                    Debug.LogError($"primer contorno tiene parent!");
+                if (jerarquiasP[siguienteContorno].Previous != -1)
+                    Debug.LogError($"primer contorno tiene previous!");
+            }
+            else
+            {
+                siguienteContorno = -1;
+            }
+
+            while (siguienteContorno != -1)
+            {
+                int i = siguienteContorno;//el siguiente ahora es el actual
+                // pero al toque seteo el siguiente por si hago un early continue
+                siguienteContorno = jerarquiasP[siguienteContorno].Next;
+
                 if (contornosP[i].Length <= 2) // una lina sin area ni nada muy complicado.. o un punto osea nada que ver
                     continue;
 
@@ -298,14 +315,34 @@ public class TokenDetector : ScriptableObject
 
                 if (nuevoToken.TipoTam == TokenTemplates.TipoTam.Referencia)
                     resultados.areasReferencia.Add(nuevoToken.areaRect);
+
+                //detectar armas dentro de token
+                DetectarArmasEnToken(resultadoBinario, i, contornosP, jerarquiasP, nuevoToken);
             }
 
             _blobsAmarillos.FromHueMat(hueInputMat, tipoHue, resultadoBinario, out Point[][] contornosA, out HierarchyIndex[] jerarquiasA);
 
             resultados.tokensAmarillo = new();
 
-            for (int i = 0; i < contornosA.Length; i++)
+            siguienteContorno = 0;
+            if (jerarquiasA.Length > 0)
             {
+                if (jerarquiasA[siguienteContorno].Parent != -1)
+                    Debug.LogError($"primer contorno tiene parent!");
+                if (jerarquiasA[siguienteContorno].Previous != -1)
+                    Debug.LogError($"primer contorno tiene previous!");
+            }
+            else
+            {
+                siguienteContorno = -1;
+            }
+
+            while (siguienteContorno != -1)
+            {
+                int i = siguienteContorno;//el siguiente ahora es el actual
+                // pero al toque seteo el siguiente por si hago un early continue
+                siguienteContorno = jerarquiasA[siguienteContorno].Next;
+
                 if (contornosA[i].Length <= 2) // una lina sin area ni nada muy complicado.. o un punto osea nada que ver
                     continue;
 
@@ -321,6 +358,9 @@ public class TokenDetector : ScriptableObject
 
                 if (nuevoToken.TipoTam == TokenTemplates.TipoTam.Referencia)
                     resultados.areasReferencia.Add(nuevoToken.areaRect);
+
+                //detectar armas dentro de token
+                DetectarArmasEnToken(resultadoBinario, i, contornosA, jerarquiasA, nuevoToken);
             }
 
             if (resultados.areasReferencia.Count > 0)
@@ -360,9 +400,11 @@ public class TokenDetector : ScriptableObject
 
                 // si esta adentro de algun contorno, el valor es positivo y esta dentro de otro token asique lo ignoramos
                 // en realidad, se lo tendriamos que agregar al token tal vez
+                // update: ahora las armas las calculamos como los huecos de los blobs de naves
+                // asique solo skipeamos aca, dejo un comment hasta estar conforme
                 if (resultados.todosLosTokens.Find(test => Cv2.PointPolygonTest(test.contorno, cvBBox.Center, false) > 0d) is TokenEncontrado token)
                 {
-                    token.AgregarArma(contornosF[i], cvBBox.Center);
+                    // token.AgregarArma(contornosF[i], cvBBox.Center);
                     continue;
                 }
 
@@ -379,6 +421,27 @@ public class TokenDetector : ScriptableObject
 
             // Cv2.DistanceTransform(resultadoBinario, resultadoBinario, DistanceTypes.L2, DistanceMaskSize.Precise);
             // Cv2.ConvertScaleAbs(resultadoBinario, resultadoBinario, 60f, 0f);
+        }
+    }
+
+    private void DetectarArmasEnToken(Mat resultadoBinario, int indiceContorno, Point[][] contornos, HierarchyIndex[] jerarquias, TokenEncontrado token)
+    {
+        var minBlobsArea = _minBlobsSqArea * _minBlobsSqArea;
+
+        int hijo = jerarquias[indiceContorno].Child;
+        while (hijo != -1)
+        {
+            int i = hijo;
+            hijo = jerarquias[hijo].Next;// seteo ya el siguiente por si hago un early continue
+
+            if (contornos[i].Length <= 2) // una lina sin area ni nada muy complicado.. o un punto osea nada que ver
+                continue;
+
+            if (minBlobsArea > 0f && Cv2.ContourArea(contornos[i]) < minBlobsArea)
+                continue;
+
+            var cvBBox = Cv2.BoundingRect(contornos[i]);
+            token.AgregarArma(contornos[i], cvBBox.Center);
         }
     }
 
@@ -450,7 +513,7 @@ public class TokenDetector : ScriptableObject
                     if (resultados != null)
                         EditorGUILayout.FloatField("Median Area Refe", resultados.medianArea);
 
-                    for (int i = 0; i < detector._tokenTemplates.tokenTemplates.Length; i++)
+                    for (int i = 0; i < detector._tokenTemplates.tokenTemplates.Count; i++)
                     {
                         using (new EditorGUILayout.HorizontalScope())
                         {
@@ -522,6 +585,11 @@ public class TokenDetector : ScriptableObject
                 tooltip += $"({arma.X},{arma.Y})\n";
             }
 
+            tooltip += "comparaciones\n";
+            foreach (var posible in encontrado.comparaciones)
+            {
+                tooltip += $"{posible.Value.divergencia}\n";
+            }
 
             GUI.Label(guirect, new GUIContent(string.Empty, tooltip));
         }

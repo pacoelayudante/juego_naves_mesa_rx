@@ -92,7 +92,7 @@ Shader "Unlit/HSVFilterPreview"
                 hsv.g = GammaToLinearSpace(hsv.g);
                 hsv.b = GammaToLinearSpace(hsv.b);
                 
-                fixed3 enRango = step(_HSVMin, hsv.rgb);
+                float3 enRango = step(_HSVMin, hsv.rgb);
 
                 enRango = enRango * step(hsv.rgb, _HSVMax);
                 enRango = lerp(enRango, 1.0-enRango, _Invertir);

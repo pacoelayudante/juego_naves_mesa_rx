@@ -25,6 +25,7 @@ public class ColorBlobConfigurator : MonoBehaviour
         {
             var json = PlayerPrefs.GetString(nombreLargo, "{}");
             JsonUtility.FromJsonOverwrite(json, configuration);
+            configuration.name = loadName;
         }
     }
 

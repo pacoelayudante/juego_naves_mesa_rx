@@ -822,7 +822,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9f230978d1786a46b57de213b9d50fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _defaultColorBlobs: {fileID: 11400000, guid: e48968e1f99107f4faffccb140b443d5, type: 2}
+  _defaultColorBlobs: {fileID: 11400000, guid: 7776e3f8681de1744a3fa23646272fa5, type: 2}
   _imageExplorer: {fileID: 1995224615}
   _margenesDemo: 4
   _colorBlobConfig: {fileID: 894933388}

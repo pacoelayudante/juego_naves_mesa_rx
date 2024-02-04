@@ -38,6 +38,9 @@ public class EscudoEnEscena : MonoBehaviour
         var escudoGO = new GameObject($"Escudo de {nave} ({escudoPow.x})");
         escudoGO.transform.parent = nave.transform;
         escudoGO.transform.localPosition = centro;
+        
+        // hardcoded
+        escudoGO.transform.localRotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
 
         var escudo = escudoGO.AddComponent<EscudoEnEscena>();
 
@@ -90,8 +93,6 @@ public class EscudoEnEscena : MonoBehaviour
             escudo.linea.widthCurve = new AnimationCurve(curvaList.ToArray());
         }
 
-        // hardcoded
-        escudoGO.transform.localRotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
         return escudo;
     }
 
