@@ -102,6 +102,8 @@ public class NaveEnEscena : MonoBehaviour
             return;
         }
 
+        float escalaAcomodarTam = configEscena.expectedImageSize / Mathf.Max(CVManager.Imagen.width, CVManager.Imagen.height);
+
         var meshcol = gameObject.AddComponent<PolygonCollider2D>();
         var path = new Vector2[encontrado.contorno.Length];
 
@@ -133,6 +135,13 @@ public class NaveEnEscena : MonoBehaviour
         {
             var p = encontrado.puntosArmas[i];
             armas[i] = new Vector2((float)p.X, (float)p.Y);
+
+            var armaGO = new GameObject($"Arma de {this} ({i})");
+            armaGO.transform.parent = this.transform;
+            armaGO.transform.position = armas[i];
+            var sr = armaGO.gameObject.AddComponent<SpriteRenderer>();
+            armaGO.transform.localScale = Vector3.one / escalaAcomodarTam;
+            sr.sprite = configEscena._shotSource;
         }
 
         indiceArmaCentral = encontrado.indiceArmaCentral;
@@ -152,13 +161,13 @@ public class NaveEnEscena : MonoBehaviour
             var escudoEnEscena = EscudoEnEscena.Inicializar(this, centro, encontrado.radioCirculo, configEscena.segmentosEscudos, escudo, configEscena._escudoMat);
             _colliders.AddRange(escudoEnEscena._colliders);
 
-            float escalaAcomodarTam = configEscena.expectedImageSize / Mathf.Max(CVManager.Imagen.width, CVManager.Imagen.height);
             escudoEnEscena.escalaAcomodarTam = escalaAcomodarTam;
         }
     }
 
-    public void ApuntarDisparo(TokenDetector.TokenDisparador disparo)
+    public void ApuntarDisparo(TokenDetector.TokenDisparador disparo, PlasmarEscenario configEscena)
     {
+        float escalaAcomodarTam = configEscena.expectedImageSize / Mathf.Max(CVManager.Imagen.width, CVManager.Imagen.height);
         DisparoPreparado = true;
 
         apuntadores = new Vector2[disparo.localMaximas.Length];
@@ -166,7 +175,15 @@ public class NaveEnEscena : MonoBehaviour
         {
             var p = disparo.localMaximas[i];
             apuntadores[i] = new Vector2((float)p.X, (float)p.Y);
+
+            var disparadorGO = new GameObject($"Disparador de {this} ({i})");
+            disparadorGO.transform.parent = this.transform;
+            disparadorGO.transform.position = apuntadores[i];
+            var sr = disparadorGO.gameObject.AddComponent<SpriteRenderer>();
+            disparadorGO.transform.localScale = Vector3.one / escalaAcomodarTam;
+            sr.sprite = configEscena._shotSource;
         }
+        
         var apuntadorCentral = apuntadores[indiceApuntadoreCentral = disparo.indiceCentral];
 
         rayos.Add(new Ray2D(armas[indiceArmaCentral], armas[indiceArmaCentral] - apuntadorCentral));
@@ -235,7 +252,7 @@ public class NaveEnEscena : MonoBehaviour
             foreach (var p in apuntadores)
             {
                 Gizmos.DrawSphere(p, 6f);
-                if (p==apuntadores[indiceApuntadoreCentral])
+                if (p == apuntadores[indiceApuntadoreCentral])
                     Gizmos.DrawSphere(p, 9f);
             }
         }
@@ -245,7 +262,7 @@ public class NaveEnEscena : MonoBehaviour
             foreach (var p in armas)
             {
                 Gizmos.DrawCube(p, Vector2.one * 6f);
-                if (p==armas[indiceArmaCentral])
+                if (p == armas[indiceArmaCentral])
                     Gizmos.DrawCube(p, Vector2.one * 9f);
             }
         }

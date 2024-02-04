@@ -59,7 +59,7 @@ public class ViewHitsEnPartida : MonoBehaviour
         }
     }
 
-    void MostrarIndice(int mostrar)
+    public void MostrarIndice(int mostrar)
     {
         indiceMuestraActual = mostrar;
         if (indiceMuestraActual >= 0 && indiceMuestraActual < navesEnEscena.Count)
@@ -73,7 +73,7 @@ public class ViewHitsEnPartida : MonoBehaviour
         {
             var x = CVManager.Imagen.width / (2 );
             var y = -CVManager.Imagen.height / (2 );
-            _orthCam.transform.position = new Vector3(x, y, _orthCam.transform.position.z) * managerDePartida.escalaAcomodarTam;
+            _orthCam.transform.position = new Vector3(x * managerDePartida.escalaAcomodarTam, y * managerDePartida.escalaAcomodarTam, _orthCam.transform.position.z);
             _orthCam.orthographicSize = CVManager.Imagen.height * managerDePartida.escalaAcomodarTam / 2;
 
             _navesText.text = $"Todo";

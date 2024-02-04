@@ -17,6 +17,7 @@ MonoBehaviour:
   - {fileID: 1090153375, guid: 43711cb09ed404645aae2f51ce5907ab, type: 3}
   - {fileID: -1519412815, guid: 809062171aa22844ba0cb5f31521bf33, type: 3}
   _imagenHitEscudo: {fileID: -1248560154, guid: 2a4e862a75d3fbf4eb0b7c0a916ab757, type: 3}
+  _shotSource: {fileID: -1137732482, guid: 53e3b9e0eae27a74d992af25a07e7c90, type: 3}
   _tokenDetector: {fileID: 11400000, guid: 81a51cb297baf2b41ad44e9215dafdf7, type: 2}
   expectedImageSize: 930
   defaultDistLaserMiss: 800

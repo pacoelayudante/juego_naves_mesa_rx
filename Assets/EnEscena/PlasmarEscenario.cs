@@ -13,6 +13,7 @@ public class PlasmarEscenario : ScriptableObject
 {
     public List<Sprite> _imagenHits = new List<Sprite>();
     public Sprite _imagenHitEscudo;
+    public Sprite _shotSource;
 
     public TokenDetector _tokenDetector;
 
@@ -81,7 +82,7 @@ public class PlasmarEscenario : ScriptableObject
         {
             var primerTokenValido = disparo.tokenConArmasCercanos.Find(el => !navesEnEscena[el].DisparoPreparado);
             if (primerTokenValido != null)
-                navesEnEscena[primerTokenValido].ApuntarDisparo(disparo);
+                navesEnEscena[primerTokenValido].ApuntarDisparo(disparo, this);
         }
 
         foreach (int equipo in equipos.Keys)
